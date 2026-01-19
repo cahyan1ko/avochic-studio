@@ -54,6 +54,7 @@ class KebunController extends Controller
                 $kebun->tanam()->create([
                     'jenis_tanaman' => $request->tanam['jenis_tanaman'],
                     'jumlah_tanaman' => $request->tanam['jumlah_tanaman'],
+                    'luas_tanam'     => $request->tanam['luas_tanam'],
                     'tanggal_tanam' => $request->tanam['tanggal_tanam'],
                 ]);
             }

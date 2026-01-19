@@ -18,6 +18,8 @@ class Kebun extends Model
         'catatan',
     ];
 
+    protected $appends = ['sisa_lahan'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
