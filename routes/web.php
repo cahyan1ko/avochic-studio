@@ -5,9 +5,7 @@ use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
+    return view('index');
 })->name('home');
 
 Route::get('dashboard', function () {
@@ -18,4 +16,4 @@ Route::get('/register', function () {
     return Inertia::render('Auth/Register');
 })->middleware('guest');
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';

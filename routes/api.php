@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\KebunController;
 use App\Http\Controllers\Api\TanamController;
 use App\Http\Controllers\Api\Auth\AuthController;
+use App\Http\Controllers\Api\PemupukanController;
 use App\Http\Controllers\Api\PenyiramanController;
 
 
@@ -21,4 +22,12 @@ Route::middleware('auth.api')->group(function () {
     Route::get('/penyiraman', [PenyiramanController::class, 'index']);
 
     Route::get('/tanam/{tanam}/penyiraman', [PenyiramanController::class, 'byTanam']);
+
+    Route::post('/pemupukan', [PemupukanController::class, 'store'])
+        ->middleware('auth:api');
+
+    Route::get(
+        '/tanam/{id}/pemupukan',
+        [PemupukanController::class, 'index']
+    )->middleware('auth:api');
 });
