@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Tanam;
+use App\Models\Penyiraman;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePenyiramanRequest;
-use App\Models\Penyiraman;
-use App\Models\Tanam;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\UpdatePenyiramanRequest;
 
 class PenyiramanController extends Controller
 {
@@ -135,6 +136,70 @@ class PenyiramanController extends Controller
             return response()->json([
                 'status'  => false,
                 'message' => 'Gagal menambahkan jadwal penyiraman',
+                'error'   => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    public function update(UpdatePenyiramanRequest $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthenticated',
+                ], 401);
+            }
+
+            $penyiraman = Penyiraman::with('tanam.kebun')
+                ->where('id', $id)
+                ->first();
+
+            if (!$penyiraman) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Jadwal penyiraman tidak ditemukan',
+                ], 404);
+            }
+
+            // 🔒 Validasi kepemilikan kebun
+            if ($penyiraman->tanam->kebun->user_id !== $user->id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Anda tidak memiliki akses ke jadwal ini',
+                ], 403);
+            }
+
+            $penyiraman->update([
+                'jam'    => $request->jam,
+                'repeat' => $request->repeat,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Jadwal penyiraman berhasil diperbarui',
+                'data'    => [
+                    'id'          => $penyiraman->id,
+                    'tanam_id'    => $penyiraman->tanam_id,
+                    'jam'         => $penyiraman->jam,
+                    'repeat'      => $penyiraman->repeat,
+                    'jumlah_air'  => (float) $penyiraman->jumlah_air,
+                    'created_at'  => $penyiraman->created_at->toDateTimeString(),
+                    'updated_at'  => $penyiraman->updated_at->toDateTimeString(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Gagal memperbarui jadwal penyiraman',
                 'error'   => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }

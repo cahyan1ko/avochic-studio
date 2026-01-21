@@ -18,8 +18,9 @@ Route::middleware('auth.api')->group(function () {
 
     Route::post('/kebun/{kebun}/tanam', [TanamController::class, 'store']);
 
-    Route::post('/penyiraman', [PenyiramanController::class, 'store']);
     Route::get('/penyiraman', [PenyiramanController::class, 'index']);
+    Route::post('/penyiraman', [PenyiramanController::class, 'store']);
+    Route::put('/penyiraman/{id}', [PenyiramanController::class, 'update']);
     Route::delete('/penyiraman/{id}', [PenyiramanController::class, 'destroy']);
 
     Route::get('/tanam/{tanam}/penyiraman', [PenyiramanController::class, 'byTanam']);
