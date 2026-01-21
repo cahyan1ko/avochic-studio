@@ -2,60 +2,87 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Tanam;
+use App\Models\Pemupukan;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePemupukanRequest;
-use App\Models\Pemupukan;
-use App\Models\Tanam;
-use Illuminate\Support\Facades\DB;
 
 class PemupukanController extends Controller
 {
-
-    public function index($id)
+    /**
+     * GET /pemupukan
+     * List semua pemupukan milik user
+     */
+    public function index()
     {
-        try {
-            $user = auth('api')->user();
+        $user = auth('api')->user();
 
-            $tanam = Tanam::with('kebun')
-                ->where('id', $id)
-                ->firstOrFail();
+        $pemupukan = Pemupukan::with('tanam.kebun')
+            ->whereHas('tanam.kebun', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->orderBy('jam')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'tanam_id' => $item->tanam_id,
+                    'tanaman' => $item->tanam->jenis_tanaman ?? null,
+                    'jenis_pupuk' => $item->jenis_pupuk,
+                    'jam' => $item->jam,
+                    'repeat' => $item->repeat,
+                    'jumlah_pupuk' => (float) $item->jumlah_pupuk,
+                    'created_at' => $item->created_at->toDateTimeString(),
+                ];
+            });
 
-            // 🔒 validasi kepemilikan kebun
-            if ($tanam->kebun->user_id !== $user->id) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Anda tidak memiliki akses ke tanaman ini',
-                ], 403);
-            }
+        return response()->json([
+            'status' => true,
+            'message' => 'List pemupukan berhasil diambil',
+            'data' => $pemupukan,
+        ]);
+    }
 
-            $pemupukan = Pemupukan::where('tanam_id', $id)
-                ->orderBy('jam')
-                ->get()
-                ->map(function ($item) {
-                    return [
-                        'id' => $item->id,
-                        'jenis_pupuk' => $item->jenis_pupuk,
-                        'jam' => $item->jam,
-                        'repeat' => $item->repeat,
-                        'jumlah_pupuk' => (float) $item->jumlah_pupuk,
-                        'created_at' => $item->created_at->toDateTimeString(),
-                    ];
-                });
+    /**
+     * GET /tanam/{tanam}/pemupukan
+     */
+    public function byTanam(Tanam $tanam)
+    {
+        $user = auth('api')->user();
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Jadwal pemupukan berhasil diambil',
-                'data' => $pemupukan,
-            ]);
-        } catch (\Exception $e) {
+        // 🔒 validasi kepemilikan
+        if ($tanam->kebun->user_id !== $user->id) {
             return response()->json([
                 'status' => false,
-                'message' => 'Gagal mengambil jadwal pemupukan',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Anda tidak memiliki akses ke tanaman ini',
+            ], 403);
         }
+
+        $pemupukan = $tanam->pemupukan()
+            ->orderBy('jam')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'jenis_pupuk' => $item->jenis_pupuk,
+                    'jam' => $item->jam,
+                    'repeat' => $item->repeat,
+                    'jumlah_pupuk' => (float) $item->jumlah_pupuk,
+                    'created_at' => $item->created_at->toDateTimeString(),
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Jadwal pemupukan berhasil diambil',
+            'data' => $pemupukan,
+        ]);
     }
-    
+
+    /**
+     * POST /pemupukan
+     */
     public function store(StorePemupukanRequest $request)
     {
         DB::beginTransaction();
@@ -65,9 +92,16 @@ class PemupukanController extends Controller
 
             $tanam = Tanam::with('kebun')
                 ->where('id', $request->tanam_id)
-                ->firstOrFail();
+                ->first();
 
-            // 🔒 validasi kepemilikan kebun
+            if (!$tanam) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Data tanaman tidak ditemukan',
+                ], 404);
+            }
+
+            // 🔒 validasi kepemilikan
             if ($tanam->kebun->user_id !== $user->id) {
                 return response()->json([
                     'status' => false,
@@ -75,8 +109,8 @@ class PemupukanController extends Controller
                 ], 403);
             }
 
-            // 🌱 contoh perhitungan pupuk (bebas kamu atur)
-            $jumlahPupuk = (float) $tanam->luas_tanam * 2; // kg
+            // 🌱 contoh perhitungan pupuk
+            $jumlahPupuk = (float) $tanam->luas_tanam * 2;
 
             $pemupukan = Pemupukan::create([
                 'tanam_id' => $tanam->id,
@@ -107,7 +141,7 @@ class PemupukanController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Gagal menambahkan jadwal pemupukan',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }

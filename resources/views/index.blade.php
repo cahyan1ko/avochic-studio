@@ -51,7 +51,6 @@
                 mask-image: linear-gradient(to bottom, black 90%, transparent);
                 -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent);
             ">
-                    <div class="absolute inset-0 rounded-2xl ring-4 ring-green-200 opacity-70 blur-sm"></div>
                 </div>
             </div>
 

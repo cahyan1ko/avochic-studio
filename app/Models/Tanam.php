@@ -32,4 +32,9 @@ class Tanam extends Model
     {
         return $this->hasMany(Penyiraman::class);
     }
+
+    public function pemupukan()
+    {
+        return $this->hasMany(Pemupukan::class);
+    }
 }
