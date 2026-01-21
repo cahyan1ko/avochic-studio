@@ -3,8 +3,8 @@
     <div class="max-w-[1200px] mx-auto px-5 h-full flex items-center justify-between relative">
         <!-- Logo -->
         <a href="#home" class="flex items-center gap-2 z-10">
-            <img src="{{ asset('logo/avochic-landscape.png') }}" alt="Logo"
-                class="h-6 sm:h-7 md:h-8 lg:h-9 xl:h-10 transition-all duration-300" />
+            <img src="{{ asset('logo/logo-plantory.png') }}" alt="Logo"
+                class="h-8 sm:h-9 md:h-10 lg:h-11 xl:h-12 transition-all duration-300" />
         </a>
 
         <!-- Menu Desktop -->

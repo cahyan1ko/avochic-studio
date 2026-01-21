@@ -139,4 +139,50 @@ class PenyiramanController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthenticated',
+                ], 401);
+            }
+
+            $penyiraman = Penyiraman::with('tanam.kebun')
+                ->where('id', $id)
+                ->first();
+
+            if (!$penyiraman) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Jadwal penyiraman tidak ditemukan',
+                ], 404);
+            }
+
+            // 🔒 Validasi kepemilikan kebun
+            if ($penyiraman->tanam->kebun->user_id !== $user->id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Anda tidak memiliki akses ke jadwal ini',
+                ], 403);
+            }
+
+            $penyiraman->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Jadwal penyiraman berhasil dihapus',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal menghapus jadwal penyiraman',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
 }

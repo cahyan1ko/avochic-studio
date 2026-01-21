@@ -20,6 +20,7 @@ Route::middleware('auth.api')->group(function () {
 
     Route::post('/penyiraman', [PenyiramanController::class, 'store']);
     Route::get('/penyiraman', [PenyiramanController::class, 'index']);
+    Route::delete('/penyiraman/{id}', [PenyiramanController::class, 'destroy']);
 
     Route::get('/tanam/{tanam}/penyiraman', [PenyiramanController::class, 'byTanam']);
 
