@@ -27,4 +27,9 @@ class Tanam extends Model
     {
         return $this->belongsTo(Kebun::class);
     }
+
+    public function penyiraman()
+    {
+        return $this->hasMany(Penyiraman::class);
+    }
 }
