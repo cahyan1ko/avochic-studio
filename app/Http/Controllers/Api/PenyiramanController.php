@@ -10,6 +10,68 @@ use Illuminate\Support\Facades\DB;
 
 class PenyiramanController extends Controller
 {
+
+    public function index()
+    {
+        $user = auth('api')->user();
+
+        $penyiraman = Penyiraman::with('tanam.kebun')
+            ->whereHas('tanam.kebun', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->orderBy('jam')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'tanam_id' => $item->tanam_id,
+                    'tanaman' => $item->tanam->jenis_tanaman ?? null,
+                    'jam' => $item->jam,
+                    'repeat' => $item->repeat,
+                    'jumlah_air' => (float) $item->jumlah_air,
+                    'created_at' => $item->created_at->toDateTimeString(),
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'List penyiraman berhasil diambil',
+            'data' => $penyiraman,
+        ]);
+    }
+
+    public function byTanam(Tanam $tanam)
+    {
+        $user = auth('api')->user();
+
+        // 🔒 validasi kepemilikan
+        if ($tanam->kebun->user_id !== $user->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Anda tidak memiliki akses ke tanaman ini',
+            ], 403);
+        }
+
+        $penyiraman = $tanam->penyiraman()
+            ->orderBy('jam')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'jam' => $item->jam,
+                    'repeat' => $item->repeat,
+                    'jumlah_air' => (float) $item->jumlah_air,
+                    'created_at' => $item->created_at->toDateTimeString(),
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Jadwal penyiraman berhasil diambil',
+            'data' => $penyiraman,
+        ]);
+    }
+
     public function store(StorePenyiramanRequest $request)
     {
         DB::beginTransaction();
