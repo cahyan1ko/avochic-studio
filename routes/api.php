@@ -27,4 +27,5 @@ Route::middleware('auth.api')->group(function () {
     Route::get('/pemupukan', [PemupukanController::class, 'index']);
     Route::post('/pemupukan', [PemupukanController::class, 'store'])->middleware('auth:api');
     Route::get('/tanam/{tanam}/pemupukan', [PemupukanController::class, 'byTanam'])->middleware('auth:api');
+    Route::delete('/pemupukan/{id}', [PemupukanController::class, 'destroy']);
 });
