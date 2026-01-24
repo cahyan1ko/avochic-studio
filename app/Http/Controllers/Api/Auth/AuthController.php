@@ -129,14 +129,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if ($user->is_verified) {
-            return response()->json([
-                'status' => false,
-                'message' => 'User sudah terverifikasi',
-                'data' => null
-            ], 422);
-        }
-
         if ($user->otp_code !== (string) $request->otp) {
             return response()->json([
                 'status' => false,
