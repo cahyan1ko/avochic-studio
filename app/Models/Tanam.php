@@ -37,4 +37,9 @@ class Tanam extends Model
     {
         return $this->hasMany(Pemupukan::class);
     }
+
+    public function panen()
+    {
+        return $this->hasMany(Panen::class);
+    }
 }

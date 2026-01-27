@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\KebunController;
+use App\Http\Controllers\Api\PanenController;
 use App\Http\Controllers\Api\TanamController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\Auth\AuthController;
@@ -29,6 +30,10 @@ Route::middleware('auth.api')->group(function () {
     Route::post('/pemupukan', [PemupukanController::class, 'store'])->middleware('auth:api');
     Route::get('/tanam/{tanam}/pemupukan', [PemupukanController::class, 'byTanam'])->middleware('auth:api');
     Route::delete('/pemupukan/{id}', [PemupukanController::class, 'destroy']);
+
+    Route::get('/panen', [PanenController::class, 'index']);
+    Route::post('/panen', [PanenController::class, 'store']);
+    Route::delete('/panen/{id}', [PanenController::class, 'destroy']);
 
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
