@@ -109,7 +109,6 @@ class PemupukanController extends Controller
                 ], 403);
             }
 
-            // 🌱 contoh perhitungan pupuk
             $jumlahPupuk = (float) $tanam->luas_tanam * 2;
 
             $pemupukan = Pemupukan::create([
@@ -145,6 +144,82 @@ class PemupukanController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * PUT /pemupukan/{id}
+     */
+    public function update(StorePemupukanRequest $request, $id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $user = auth('api')->user();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthenticated',
+                ], 401);
+            }
+
+            $pemupukan = Pemupukan::with('tanam.kebun')
+                ->where('id', $id)
+                ->first();
+
+            if (!$pemupukan) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Jadwal pemupukan tidak ditemukan',
+                ], 404);
+            }
+
+            // 🔒 validasi kepemilikan kebun
+            if ($pemupukan->tanam->kebun->user_id !== $user->id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Anda tidak memiliki akses ke jadwal ini',
+                ], 403);
+            }
+
+            $tanam = $pemupukan->tanam;
+
+            // 🌱 hitung ulang pupuk (konsisten dengan store)
+            $jumlahPupuk = (float) $tanam->luas_tanam * 2;
+
+            $pemupukan->update([
+                'jenis_pupuk' => $request->jenis_pupuk,
+                'jam' => $request->jam,
+                'repeat' => $request->repeat,
+                'jumlah_pupuk' => $jumlahPupuk,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Jadwal pemupukan berhasil diperbarui',
+                'data' => [
+                    'id' => $pemupukan->id,
+                    'tanam_id' => $pemupukan->tanam_id,
+                    'jenis_pupuk' => $pemupukan->jenis_pupuk,
+                    'jam' => $pemupukan->jam,
+                    'repeat' => $pemupukan->repeat,
+                    'jumlah_pupuk' => (float) $pemupukan->jumlah_pupuk,
+                    'created_at' => $pemupukan->created_at->toDateTimeString(),
+                    'updated_at' => $pemupukan->updated_at->toDateTimeString(),
+                ],
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Gagal memperbarui jadwal pemupukan',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
 
     public function destroy($id)
     {
